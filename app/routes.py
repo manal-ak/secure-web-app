@@ -14,6 +14,29 @@ from flask_login import login_user, logout_user, login_required, current_user
 def home():
     return redirect(url_for('login'))
 
+"""
+import hashlib  
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # ❌ Weak password hashing using MD5 
+        hashed_password = hashlib.md5(password.encode()).hexdigest()
+
+        new_user = User(username=username, password=hashed_password)
+
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registration successful. Please log in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+"""
+
+#strong hashing mechanism(bycrypt)
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -30,6 +53,8 @@ def register():
 
     return render_template('register.html')
 
+"""
+from sqlalchemy import text
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -37,21 +62,80 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        user = User.query.filter_by(username=username).first()
+        # ❌ Deliberately vulnerable to SQL injection (demo)
+        query = text(f"SELECT * FROM user WHERE username = '{username}' AND password = '{password}'")
+        result = db.session.execute(query).fetchone()
+
+        if result:
+            # 👇 Build the user manually from the result
+            user = User.query.get(result.id)
+            login_user(user)
+
+            if user.role == 'admin':
+                return redirect(url_for('admin_panel'))
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Login failed. Check your credentials.', 'danger')
+
+    return render_template('login.html')
+    """
+"""
+#for the md5 password storing
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        # ❌ Match weak MD5 password
+        hashed_input_password = hashlib.md5(password.encode()).hexdigest()
+        user = User.query.filter_by(username=username, password=hashed_input_password).first()
+
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
+            if user.role == 'admin':
+                return redirect(url_for('admin_panel'))
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Login failed. Check your credentials.', 'danger')
+
+    return render_template('login.html')
+"""
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # ✅ Safe query using SQLAlchemy ORM (prevents SQL injection)
+        user = User.query.filter_by(username=username).first()
+
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user)
+            if user.role == 'admin':
+                return redirect(url_for('admin_panel'))
             return redirect(url_for('dashboard'))
         else:
             flash('Login failed. Check your credentials.', 'danger')
 
     return render_template('login.html')
 
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    if request.method == 'POST':
+        current_user.comment = request.form['comment']
+        db.session.commit()
+        flash("Comment posted!", "success")
+        return redirect(url_for('dashboard'))
 
+    return render_template('dashboard.html', username=current_user.username, comment=current_user.comment)
+
+"""
 @app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html', username=current_user.username)
-
+"""
 
 @app.route('/logout')
 @login_required

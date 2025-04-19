@@ -13,9 +13,24 @@
     {% endfor %}
   {% endif %}
 {% endwith %}
-
-    <h2>Welcome, {{ username }}!</h2>
+ <h2>Welcome, {{ username }}!</h2>
     <p>This is your dashboard.</p>
+    <form method="POST" action="{{ url_for('dashboard') }}">
+        <div class="mb-3">
+            <label>Leave a comment:</label>
+            <textarea name="comment" class="form-control" required></textarea>
+        </div>
+        <button class="btn btn-primary">Post Comment</button>
+    </form>
+    <hr>
+    
+    <h5>Your Comment:</h5>
+    <!-- ❌ This line will be vulnerable, because it uses safe so anything the user types for example  <div><script>alert("Hi")</script></div>
+    this will show as a pop up to the user so instead we have to remove the safe -->
+    <!--<div>{{ comment|safe }}</div> -->
+    <div>{{ comment}}</div> <!-- correct way -->
+    <hr>
+    
     <a href="{{ url_for('admin_button') }}" class="btn btn-warning">Admin Settings</a>
     <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
 </body>
