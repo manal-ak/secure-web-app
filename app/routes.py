@@ -54,6 +54,8 @@ def register():
     return render_template('register.html')
 
 """
+SQL Injection
+
 from sqlalchemy import text
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -80,7 +82,7 @@ def login():
     return render_template('login.html')
     """
 """
-#for the md5 password storing
+Weak Password Storage for the md5 password storing
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
